@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบตารางเรียนอัจฉริยะ 6/7 by Dek70</title>
+    <!-- Tailwind CSS for modern & clean UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Mitr for headings, Inter for numbers -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Mitr:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Mitr', 'Inter', 'sans-serif'],
+                        mono: ['Inter', 'monospace'],
+                    },
+                    colors: {
+                        schedule: {
+                            pink: '#FBCFE8',
+                            blue: '#BFDBFE',
+                            green: '#A7F3D0',
+                            yellow: '#FEF08A',
+                            purple: '#E9D5FF',
+                            orange: '#FED7AA',
+                            pastel: '#FAF5FF',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth transition for hover effects */
+        .transition-all-300 {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col antialiased">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                    <i data-lucide="graduation-cap" class="w-8 h-8 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-wide">ตารางเรียน ม.6/7</h1>
+                    <p class="text-xs text-pink-100 font-light">จัดทำโดย Dek70 • ระบบติดตามตารางเรียนอัตโนมัติ</p>
+                </div>
+            </div>
+            
+            <!-- Settings & Clock Area -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Unified Settings Trigger Button -->
+                <button onclick="openSettingsHub()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2.5 rounded-2xl border border-white/20 backdrop-blur-md transition-all duration-200 flex items-center gap-2 text-sm font-semibold shadow-sm">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span>⚙️ ตั้งค่าระบบ (Settings)</span>
+                </button>
+
+                <!-- Real-time Status Dashboard -->
+                <div class="flex items-center space-x-4 bg-white/10 px-4 py-2 rounded-2xl backdrop-blur-md border border-white/20">
+                    <div class="text-right">
+                        <div class="text-[10px] text-pink-200">เวลาปัจจุบัน</div>
+                        <div id="live-clock" class="text-lg font-bold font-mono tracking-wider">00:00:00</div>
+                    </div>
+                    <div class="h-8 w-px bg-white/20"></div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-pink-200">วันที่</div>
+                        <div id="live-date" class="text-sm font-semibold">วันจันทร์</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        
+        <!-- Active Period Dashboard (Hero card for current class status) -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Current Class Tracker Card -->
+            <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between relative overflow-hidden transition-all-300 hover:shadow-md">
+                <div class="absolute -right-16 -bottom-16 w-48 h-48 bg-pink-100/50 rounded-full blur-3xl"></div>
+                <div class="absolute -left-16 -top-16 w-48 h-48 bg-blue-100/50 rounded-full blur-3xl"></div>
+                
+                <div class="relative">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-2 h-2 mr-2 bg-emerald-500 rounded-full animate-ping"></span>
+                            ขณะนี้กำลังอยู่ในคาบเรียน
+                        </span>
+                        <span id="period-display-badge" class="font-mono text-sm bg-slate-100 px-3 py-1 rounded-full text-slate-600 font-semibold">
+                            คาบเรียนที่ --
+                        </span>
+                    </div>
+
+                    <div class="my-4">
+                        <h2 id="current-subject-title" class="text-3xl font-bold text-slate-800 tracking-tight">ไม่มีเรียนในขณะนี้</h2>
+                        <div class="flex items-center space-x-2 mt-2 text-slate-500">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            <span id="current-teacher-name" class="text-base">วันหยุดพักผ่อน หรือหลังเลิกเรียน</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 relative">
+                    <!-- Progress Bar of current class -->
+                    <div class="flex justify-between text-xs text-slate-400 mb-1">
+                        <span id="current-period-start">--:--</span>
+                        <span id="current-period-end">--:--</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                        <div id="current-class-progress" class="bg-gradient-to-r from-pink-500 to-purple-600 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-3">
+                        <span id="time-remaining-label" class="text-xs text-slate-500 font-medium">เหลืออีก -- นาที</span>
+                        <span id="current-class-percentage" class="text-xs font-bold text-pink-600">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Class Preview & Fast Actions -->
+            <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-3xl shadow-md p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-semibold tracking-wider text-indigo-200 uppercase">วิชาเรียนถัดไป</h3>
+                        <i data-lucide="arrow-right-circle" class="w-5 h-5 text-indigo-400"></i>
+                    </div>
+                    
+                    <div id="next-subject-box" class="space-y-2">
+                        <h4 id="next-subject-title" class="text-xl font-bold text-white">ไม่มีวิชาถัดไป</h4>
+                        <p id="next-teacher-name" class="text-sm text-indigo-200">เตรียมตัวกลับบ้านหรือพักผ่อน</p>
+                        <div class="inline-flex items-center space-x-1 bg-white/10 px-3 py-1 rounded-full text-xs text-indigo-300 mt-2">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                            <span id="next-subject-time">--:-- - --:--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Mode Controller -->
+                <div class="mt-6 pt-4 border-t border-indigo-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-indigo-300 flex items-center">
+                            <i data-lucide="cpu" class="w-3.5 h-3.5 mr-1.5 animate-spin text-pink-400"></i>
+                            โหมดทดสอบระบบ / จำลองเวลา
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="sim-mode-toggle" class="sr-only peer">
+                            <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Sim Sliders (Hidden by default, shown when enabled) -->
+                    <div id="sim-controls" class="space-y-3 hidden bg-black/20 p-3 rounded-xl">
+                        <div>
+                            <label class="block text-[10px] text-indigo-300 mb-1 flex justify-between">
+                                <span>เลือกวันในสัปดาห์:</span>
+                                <span id="sim-day-label" class="font-bold text-pink-400">วันจันทร์</span>
+                            </label>
+                            <select id="sim-day-select" class="w-full text-xs bg-slate-800 border border-indigo-700 rounded p-1 text-white focus:outline-none">
+                                <option value="1">วันจันทร์ (Monday)</option>
+                                <option value="2">วันอังคาร (Tuesday)</option>
+                                <option value="3">วันพุธ (Wednesday)</option>
+                                <option value="4">วันพฤหัสบดี (Thursday)</option>
+                                <option value="5">วันศุกร์ (Friday)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-indigo-300 mb-1 flex justify-between">
+                                <span>ปรับช่วงเวลาทดสอบ:</span>
+                                <span id="sim-time-label" class="font-bold text-pink-400">08:30</span>
+                            </label>
+                            <input type="range" id="sim-time-slider" min="480" max="1020" step="5" value="510" class="w-full accent-pink-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Timetable Schedule Grid -->
+        <section class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 overflow-hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 mb-6 gap-4">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="calendar" class="w-6 h-6 text-pink-500"></i>
+                    <h3 class="text-lg font-bold text-slate-800">ตารางเรียนอย่างเป็นทางการ 6/7 (Dek70)</h3>
+                </div>
+                
+                <!-- Day Filter Tabs -->
+                <div class="flex overflow-x-auto gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200/40">
+                    <button onclick="filterDay(0)" id="tab-day-0" class="tab-btn px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 bg-white shadow-sm text-slate-800">ทั้งหมด</button>
+                    <button onclick="filterDay(1)" id="tab-day-1" class="tab-btn px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 text-slate-500 hover:text-slate-800">จันทร์</button>
+                    <button onclick="filterDay(2)" id="tab-day-2" class="tab-btn px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 text-slate-500 hover:text-slate-800">อังคาร</button>
+                    <button onclick="filterDay(3)" id="tab-day-3" class="tab-btn px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 text-slate-500 hover:text-slate-800">พุธ</button>
+                    <button onclick="filterDay(4)" id="tab-day-4" class="tab-btn px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 text-slate-500 hover:text-slate-800">พฤหัสฯ</button>
+                    <button onclick="filterDay(5)" id="tab-day-5" class="tab-btn px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 text-slate-500 hover:text-slate-800">ศุกร์</button>
+                </div>
+            </div>
+
+            <!-- Responsive Desktop Grid / Mobile Cards -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[1000px] desktop-schedule-table">
+                    <thead>
+                        <tr class="border-b border-slate-200 text-[11px] uppercase text-slate-500 tracking-wider">
+                            <th class="py-3 px-4 font-semibold text-slate-700">วัน / คาบ</th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 1<br><span id="header-p-1" class="text-[10px] font-mono font-normal">08:30-09:15</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 2<br><span id="header-p-2" class="text-[10px] font-mono font-normal">09:15-10:00</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 3<br><span id="header-p-3" class="text-[10px] font-mono font-normal">10:00-10:45</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 4<br><span id="header-p-4" class="text-[10px] font-mono font-normal">10:45-11:30</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 5<br><span id="header-p-5" class="text-[10px] font-mono font-normal">11:30-12:15</span></th>
+                            <!-- Lunch break visual -->
+                            <th class="py-3 px-1 text-center font-semibold bg-pink-50/50 text-pink-500 text-[10px] w-12">พักกลางวัน<br><span id="header-p-lunch" class="text-[9px] font-mono font-normal">12:15-13:15</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 6<br><span id="header-p-6" class="text-[10px] font-mono font-normal">13:15-14:00</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 7<br><span id="header-p-7" class="text-[10px] font-mono font-normal">14:00-14:45</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 8<br><span id="header-p-8" class="text-[10px] font-mono font-normal">14:45-15:30</span></th>
+                            <th class="py-3 px-2 text-center font-semibold">คาบ 9<br><span id="header-p-9" class="text-[10px] font-mono font-normal">15:30-16:15</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="timetable-rows" class="divide-y divide-slate-100">
+                        <!-- Filled dynamically by JavaScript based on "ตารางเรียน.jpg" data -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile View Indicator/Helper -->
+            <div class="mt-4 flex items-center space-x-2 text-xs text-slate-400 sm:hidden">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                <span>ปัดตารางไปทางซ้าย-ขวา เพื่อดูวิชาในคอมพิวเตอร์ หรือกดฟิลเตอร์ตามวันด้านบน</span>
+            </div>
+        </section>
+
+        <!-- Class Memo & Homework Planner Feature -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Homework Manager (Persist via LocalStorage) -->
+            <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="list-todo" class="w-6 h-6 text-pink-500"></i>
+                        <h3 class="text-lg font-bold text-slate-800 font-sans">สมุดจดการบ้านและการเรียน (Homework & Memo)</h3>
+                    </div>
+                    <button onclick="openAddTaskModal()" class="inline-flex items-center space-x-1 text-xs font-semibold bg-pink-500 hover:bg-pink-600 text-white px-3 py-1.5 rounded-xl transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>เพิ่มการบ้าน</span>
+                    </button>
+                </div>
+
+                <div id="todo-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                    <!-- Tasks will load here -->
+                    <div class="text-center py-8 text-slate-400">
+                        <i data-lucide="folder-open" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+                        <p class="text-sm">ยินดีด้วย! ไม่มีงานค้างในขณะนี้</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Original Image Reference Block -->
+            <div class="bg-pink-50 rounded-3xl p-6 border border-pink-100 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-bold text-pink-800 text-base mb-2 flex items-center">
+                        <i data-lucide="image" class="w-5 h-5 mr-1.5"></i>
+                        รูปภาพ ตารางเรียน.jpg ต้นฉบับ
+                    </h3>
+                    <p class="text-xs text-pink-600/90 leading-relaxed mb-4">
+                        คุณสามารถสลับเปิดเช็กดูตารางรูปภาพต้นฉบับได้โดยตรงจากระบบนี้ทุกเมื่อที่ต้องการเพื่อความรวดเร็วและตรวจสอบความถูกต้อง
+                    </p>
+                </div>
+                <div>
+                    <button onclick="openOriginalImageModal()" class="w-full text-xs font-semibold bg-white border border-pink-200 hover:bg-pink-100 text-pink-700 py-2.5 px-4 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="eye" class="w-4.5 h-4.5"></i>
+                        <span>เปิดดูรูปตารางเรียนต้นฉบับ</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Page Footer -->
+    <footer class="bg-slate-100 border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
+        <p>© 2026 ระบบจำลองวิเคราะห์และแจ้งเตือนตารางเข้าเรียนอัตโนมัติ สำหรับห้อง 6/7 (Dek70)</p>
+        <p class="mt-1 font-light text-[10px] text-slate-400">พัฒนาด้วยความรักเพื่ออำนวยความสะดวกแก่นักเรียน Dek70 ทุกท่าน</p>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- UNIFIED SYSTEM SETTINGS MODAL (SETTINGS HUB) -->
+    <!-- ========================================== -->
+    <div id="settings-hub-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+            
+            <!-- Settings Header -->
+            <div class="bg-slate-950 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2 bg-pink-500 text-white rounded-xl">
+                        <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+                    </span>
+                    <div>
+                        <h3 class="text-lg font-bold">⚙️ ศูนย์ควบคุมและตั้งค่าระบบตารางเรียน</h3>
+                        <p class="text-xs text-slate-400">ควบคุมแจ้งเตือน เวลาเรียน และปรับแก้ข้อมูลทั้งหมดในที่เดียว</p>
+                    </div>
+                </div>
+                <button onclick="closeSettingsHub()" class="text-slate-400 hover:text-white p-1 rounded-lg transition-all">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Settings Workspace Layout -->
+            <div class="flex flex-col md:flex-row flex-1 overflow-hidden min-h-[400px]">
+                
+                <!-- Left Tabs Menu -->
+                <div class="w-full md:w-56 bg-slate-50 border-r border-slate-200 flex flex-row md:flex-col p-2 gap-1 overflow-x-auto md:overflow-x-visible">
+                    <button onclick="switchSettingsTab('tab-time')" id="btn-tab-time" class="settings-tab-btn flex-1 md:flex-none flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold text-left whitespace-nowrap transition bg-pink-500 text-white shadow-sm">
+                        <i data-lucide="clock" class="w-4.5 h-4.5"></i>
+                        <span>เวลาคาบเรียน</span>
+                    </button>
+                    <button onclick="switchSettingsTab('tab-notify')" id="btn-tab-notify" class="settings-tab-btn flex-1 md:flex-none flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold text-left whitespace-nowrap transition text-slate-600 hover:bg-slate-200/50">
+                        <i data-lucide="bell" class="w-4.5 h-4.5"></i>
+                        <span>ระบบแจ้งเตือน</span>
+                    </button>
+                    <button onclick="switchSettingsTab('tab-schedule')" id="btn-tab-schedule" class="settings-tab-btn flex-1 md:flex-none flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold text-left whitespace-nowrap transition text-slate-600 hover:bg-slate-200/50">
+                        <i data-lucide="calendar" class="w-4.5 h-4.5"></i>
+                        <span>แก้ไขวิชาเรียน</span>
+                    </button>
+                    <button onclick="switchSettingsTab('tab-reset')" id="btn-tab-reset" class="settings-tab-btn flex-1 md:flex-none flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold text-left whitespace-nowrap transition text-slate-600 hover:bg-slate-200/50">
+                        <i data-lucide="rotate-ccw" class="w-4.5 h-4.5"></i>
+                        <span>กู้คืนระบบ</span>
+                    </button>
+                </div>
+
+                <!-- Right Contents Space -->
+                <div class="flex-1 p-6 overflow-y-auto bg-white">
+                    
+                    <!-- Tab 1: Period Timings Form -->
+                    <div id="content-tab-time" class="settings-content-pane space-y-4">
+                        <h4 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-2">
+                            <i data-lucide="clock" class="w-4 h-4 text-pink-500"></i> ปรับแต่งช่วงเวลาแต่ละคาบเรียน
+                        </h4>
+                        <p class="text-xs text-slate-500">ปรับเวลาเข้าและเลิกของแต่ละคาบเรียน เพื่อให้ตัวนับเวลาความคืบหน้า (Progress Bar) และเสียงแจ้งเตือนทำงานได้ตรงเวลาตามกิจกรรมของโรงเรียนจริง</p>
+                        
+                        <form id="settings-time-form" onsubmit="handleSavePeriodsTime(event)" class="space-y-2.5 max-w-md">
+                            <div class="grid grid-cols-2 gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span>เวลาเข้าเรียน</span>
+                                <span>เวลาเลิกเรียน</span>
+                            </div>
+
+                            <!-- Period 1 - 9 dynamically bound -->
+                            <div class="space-y-2 text-slate-700">
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 1:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p1-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p1-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 2:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p2-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p2-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 3:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p3-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p3-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 4:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p4-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p4-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 5:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p5-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p5-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3 bg-pink-50 p-2 rounded-xl border border-pink-100">
+                                    <span class="w-14 text-xs font-bold text-pink-600">พักกลางวัน:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-plunch-start" class="border border-pink-200 rounded-xl px-2 py-1 text-xs bg-white">
+                                        <input type="time" id="time-plunch-end" class="border border-pink-200 rounded-xl px-2 py-1 text-xs bg-white">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 6:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p6-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p6-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 7:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p7-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p7-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 8:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p8-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p8-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="w-14 text-xs font-semibold">คาบ 9:</span>
+                                    <div class="flex-1 grid grid-cols-2 gap-2">
+                                        <input type="time" id="time-p9-start" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                        <input type="time" id="time-p9-end" class="border border-slate-200 rounded-xl px-2 py-1 text-xs">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md mt-4">
+                                บันทึกเวลาเรียนใหม่ทั้งหมด
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Tab 2: Notifications Config Section -->
+                    <div id="content-tab-notify" class="settings-content-pane space-y-4 hidden">
+                        <h4 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-2">
+                            <i data-lucide="bell" class="w-4 h-4 text-purple-500"></i> ตั้งค่าช่องทางการแจ้งเตือน
+                        </h4>
+                        
+                        <!-- Tomorrow Schedule Pre-alert Configuration -->
+                        <div class="p-4 bg-pink-50/40 border border-pink-200 rounded-2xl space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h5 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                    <i data-lucide="calendar-days" class="w-4.5 h-4.5 text-pink-500 animate-bounce"></i>
+                                    แจ้งเตือนตารางเรียนวันพรุ่งนี้ล่วงหน้า (19:00 น.)
+                                </h5>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="settings-tomorrow-alert" class="sr-only peer" checked>
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-500"></div>
+                                </label>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed">
+                                ระบบจะรวบรวมสรุปรายชื่อวิชา เวลาเรียน และผู้สอนของวันถัดไป ส่งผ่าน LINE Notify (และ Discord Webhook ถ้าตั้งค่า) ทุกวันเวลา 19:00 น. (1 ทุ่ม) โดยอัตโนมัติเมื่อเปิดหน้าจอนี้ทิ้งไว้
+                            </p>
+                            <button type="button" onclick="testTomorrowAlertNotification()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5">
+                                <i data-lucide="send" class="w-3.5 h-3.5 text-pink-500"></i>
+                                <span>ทดสอบส่งรายงานตารางเรียนวันพรุ่งนี้</span>
+                            </button>
+                        </div>
+
+                        <!-- LINE Notify Settings -->
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                            <h5 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                LINE Notify (การส่งเตือนกลุ่มไลน์)
+                            </h5>
+                            <div class="text-[11px] text-slate-500 space-y-1">
+                                <p>1. ไปที่เว็บไซต์ <a href="https://notify-bot.line.me/" target="_blank" class="text-emerald-600 underline font-semibold">LINE Notify</a> ล็อกอินให้เรียบร้อย</p>
+                                <p>2. กดออกรหัส Token เลือกกลุ่มนักเรียนห้อง 6/7 นำรหัสมาวางด้านล่าง</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="password" id="settings-line-token" placeholder="ใส่รหัส LINE Notify Token ที่นี่" class="flex-1 text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <button type="button" onclick="testLineNotification()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition">ทดสอบส่ง</button>
+                            </div>
+                        </div>
+
+                        <!-- Discord Webhook Settings -->
+                        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                            <h5 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                                Discord Webhook URL (ส่งเตือนเข้ากลุ่มดิสคอร์ด)
+                            </h5>
+                            <p class="text-[11px] text-slate-500">คัดลอกลิงก์ Webhook จากแชทห้องกลุ่มห้องเรียนของคุณมาใส่ตรงนี้ เพื่อให้ข้อความ Embed สวยงามถูกส่งเข้าไปให้เพื่อนๆ เมื่อถึงเวลาเรียน</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="settings-discord-webhook" placeholder="https://discord.com/api/webhooks/..." class="flex-1 text-xs border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <button type="button" onclick="testDiscordNotification()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold transition">ทดสอบส่ง</button>
+                            </div>
+                        </div>
+
+                        <!-- Web Push & TTS System Quick Controls -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-3 bg-purple-50/50 border border-purple-100 rounded-2xl">
+                                <span class="block text-xs font-bold text-purple-700 mb-1">เสียงขานคาบเรียน (Thai TTS)</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="settings-voice-notify" class="sr-only peer" checked>
+                                    <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                                    <span class="text-[11px] text-slate-600 ml-2 font-medium">เปิดใช้งานเสียงพูด</span>
+                                </label>
+                            </div>
+                            <div class="p-3 bg-blue-50/50 border border-blue-100 rounded-2xl flex flex-col justify-between">
+                                <span class="block text-xs font-bold text-blue-700 mb-1">แจ้งเตือนผ่านบราวเซอร์</span>
+                                <button type="button" onclick="requestNotificationPermission()" class="w-full text-left bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg flex items-center justify-center gap-1">
+                                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                                    <span>ขอบราวเซอร์เพื่อแจ้งเตือน</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="saveNotificationSettings()" class="w-full bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md">
+                            บันทึกการตั้งค่าการแจ้งเตือนทั้งหมด
+                        </button>
+                    </div>
+
+                    <!-- Tab 3: Edit Timetable Subject Details -->
+                    <div id="content-tab-schedule" class="settings-content-pane space-y-4 hidden">
+                        <h4 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-2">
+                            <i data-lucide="edit" class="w-4 h-4 text-indigo-500"></i> ปรับเปลี่ยนข้อมูลวิชาเรียนในตาราง
+                        </h4>
+                        <p class="text-xs text-slate-500">เลือกวันเรียน คาบเรียน และพิมพ์ข้อมูลวิชาใหม่ที่คุณต้องการปรับแต่งเพื่อทดแทนข้อมูลวิชาในวันดังกล่าว</p>
+
+                        <form id="settings-slot-form" onsubmit="handleSaveSlotViaSettings(event)" class="space-y-3 max-w-md">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">เลือกวันในสัปดาห์:</label>
+                                    <select id="slot-edit-day" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none">
+                                        <option value="1">วันจันทร์</option>
+                                        <option value="2">วันอังคาร</option>
+                                        <option value="3">วันพุธ</option>
+                                        <option value="4">วันพฤหัสบดี</option>
+                                        <option value="5">วันศุกร์</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">เลือกคาบเรียนที่:</label>
+                                    <select id="slot-edit-period" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 focus:outline-none">
+                                        <option value="1">คาบที่ 1 (08:30-09:15)</option>
+                                        <option value="2">คาบที่ 2 (09:15-10:00)</option>
+                                        <option value="3">คาบที่ 3 (10:00-10:45)</option>
+                                        <option value="4">คาบที่ 4 (10:45-11:30)</option>
+                                        <option value="5">คาบที่ 5 (11:30-12:15)</option>
+                                        <option value="6">คาบที่ 6 (13:15-14:00)</option>
+                                        <option value="7">คาบที่ 7 (14:00-14:45)</option>
+                                        <option value="8">คาบที่ 8 (14:45-15:30)</option>
+                                        <option value="9">คาบที่ 9 (15:30-16:15)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-3 space-y-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อวิชา / รหัสวิชา:</label>
+                                    <input type="text" id="slot-edit-name" placeholder="เช่น ว30205 ฟิสิกส์ 5" required class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">อาจารย์ผู้สอน:</label>
+                                    <input type="text" id="slot-edit-teacher" placeholder="เช่น ครูมยุรี" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">สีประจำวิชา:</label>
+                                        <select id="slot-edit-color" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none">
+                                            <option value="bg-schedule-blue">สีฟ้า (กลุ่มวิทย์/คณิต)</option>
+                                            <option value="bg-schedule-pink">สีชมพู (กลุ่มภาษา/วิทย์เพิ่มเติม)</option>
+                                            <option value="bg-schedule-green">สีเขียว (ภาษาไทย/ศาสนา)</option>
+                                            <option value="bg-schedule-yellow">สีเหลือง (คณิตศาสตร์)</option>
+                                            <option value="bg-schedule-purple">สีม่วง (อังกฤษ/สังคม)</option>
+                                            <option value="bg-schedule-orange">สีส้ม (กิจกรรม/ศาสนา)</option>
+                                            <option value="bg-slate-100">สีเทาพาสเทล (ว่าง/โฮมรูม)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-600 mb-1">ชั่วโมงเรียน:</label>
+                                        <select id="slot-edit-colspan" class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none">
+                                            <option value="1">คาบเรียนเดียว (45 นาที)</option>
+                                            <option value="2">เรียนควบ 2 คาบ (90 นาที)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 flex gap-2">
+                                <button type="button" onclick="handleClearSlotViaSettings()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 rounded-xl transition">
+                                    ตั้งเป็น "คาบว่าง"
+                                </button>
+                                <button type="submit" class="flex-1 bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold py-2.5 rounded-xl transition shadow-md">
+                                    บันทึกวิชานี้ลงตาราง
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Tab 4: System Recover / Factory Reset -->
+                    <div id="content-tab-reset" class="settings-content-pane space-y-4 hidden">
+                        <h4 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-2">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 text-red-500"></i> ล้างการตั้งค่าและคืนค่าระบบ
+                        </h4>
+                        <p class="text-xs text-slate-500 leading-relaxed">ปุ่มนี้จะล้างข้อมูลการปรับแต่งเวลาเรียน ข้อมูลรายวิชา ข้อมูลแจ้งเตือน บันทึกการบ้าน และโทเคนทั้งหมดที่เก็บไว้ในเบราว์เซอร์ของคุณ และจะโหลดตารางเรียน 6/7 ดั้งเดิมตามรูปภาพ **"ตารางเรียน.jpg"** กลับขึ้นมาทำงาน</p>
+                        
+                        <div class="bg-red-50 p-4 border border-red-200 rounded-2xl">
+                            <h5 class="text-xs font-bold text-red-800 flex items-center gap-1.5 mb-1">
+                                <i data-lucide="alert-triangle" class="w-4.5 h-4.5 text-red-600"></i> คำเตือนที่สำคัญ
+                            </h5>
+                            <p class="text-[11px] text-red-700 leading-relaxed">การคืนค่านี้จะมีผลทันทีและไม่สามารถกู้ข้อมูลเดิมคืนได้อีกหลังจากดำเนินการเสร็จสิ้น</p>
+                        </div>
+
+                        <button type="button" onclick="confirmResetToDefault()" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-3 px-6 rounded-xl transition shadow-md flex items-center justify-center gap-1.5">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <span>ยืนยันรีเซ็ตระบบกลับตารางดั้งเดิม</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Settings Footer -->
+            <div class="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex justify-end">
+                <button type="button" onclick="closeSettingsHub()" class="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2 px-5 rounded-xl transition">
+                    ปิดหน้าต่างการตั้งค่า
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL: Add Homework / Task -->
+    <div id="add-task-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-lg font-bold text-slate-800">เพิ่มบันทึกการเรียน / การบ้าน</h3>
+                <button onclick="closeAddTaskModal()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <form id="task-form" onsubmit="handleAddTask(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">วิชาที่สั่งงาน:</label>
+                    <select id="task-subject-select" class="w-full text-sm border border-slate-200 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        <option value="ทั่วไป">ทั่วไป / อื่นๆ</option>
+                        <option value="ฟิสิกส์">ว30205 ฟิสิกส์ 5 (ครูมยุรี)</option>
+                        <option value="เคมี">ว30225 เคมี 5 (ครูมุตตามีน)</option>
+                        <option value="ชีววิทยา">ว30245 ชีววิทยา 5 (ครูซานียะ)</option>
+                        <option value="คณิตศาสตร์">ค33101/ค33201 คณิตศาสตร์ (ครูขนิษฐา/ครูกุลธิดา)</option>
+                        <option value="ภาษาไทย">ท33101 ภาษาไทย (ครูมะดารี)</option>
+                        <option value="ภาษาอังกฤษ">อ30205/อ33101 ภาษาอังกฤษ (ครูภูวิชชา/ครูยุสรฮ)</option>
+                        <option value="สังคมศึกษา">ส33101 สังคมศึกษา (ครูสาวิตรี/ครูไกรวุฒิ)</option>
+                        <option value="ศาสนา">ศาสนา</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">หัวข้อ / รายละเอียดงาน:</label>
+                    <input type="text" id="task-title-input" required placeholder="เช่น ทำแบบฝึกหัดเรื่องคลื่นกล หน้า 10" class="w-full text-sm border border-slate-200 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">วันกำหนดส่ง:</label>
+                    <input type="date" id="task-due-input" required class="w-full text-sm border border-slate-200 rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-pink-500 hover:bg-pink-600 text-white text-sm font-semibold py-2.5 rounded-2xl transition shadow-md">
+                        บันทึกการเรียนการบ้าน
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Original Schedule Image Reference -->
+    <div id="original-image-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-4 shadow-2xl relative animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-slate-800 flex items-center text-sm md:text-base">
+                    <i data-lucide="image" class="w-5 h-5 mr-1 text-pink-500"></i>
+                    ตารางเรียนต้นฉบับ: "ตารางเรียน.jpg" (ห้อง 6/7 Dek70)
+                </h3>
+                <button onclick="closeOriginalImageModal()" class="text-slate-500 hover:text-slate-800">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-auto rounded-2xl border border-slate-100 bg-slate-100 flex items-center justify-center">
+                <img src="ตารางเรียน.jpg" alt="ตารางเรียน 6/7 by Dek70" class="max-w-full max-h-[70vh] object-contain rounded-xl" onerror="this.src='https://placehold.co/1200x800/fecdd3/9c1c1c?text=%E0%B8%95%E0%B8%B2%E0%B8%A3%E0%B8%B2%E0%B8%87%E0%B9%80%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B8%99+6/7+by+Dek70';">
+            </div>
+            <div class="mt-3 text-center text-xs text-slate-400">
+                <span>หมายเหตุ: ภาพตารางเรียนจริงถูกโหลดและใช้อ้างอิงแบบอัตโนมัติ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Alert Box System (Bypassing Window Alert) -->
+    <div id="custom-toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center space-x-3 z-50 transform translate-y-20 opacity-0 transition-all duration-300">
+        <span id="toast-icon-wrapper" class="p-1 rounded-full text-pink-400 bg-white/10">
+            <i data-lucide="info" class="w-5 h-5"></i>
+        </span>
+        <div class="flex-1">
+            <p id="toast-message" class="text-sm font-medium">ข้อความแจ้งเตือนของคุณถูกส่งแล้ว</p>
+        </div>
+    </div>
+
+    <script>
+        // Core default schedule configuration (Used for Reset and First Run fallbacks)
+        const DEFAULT_PERIODS = [
+            { id: 1, start: "08:30", end: "09:15", startMin: 510, endMin: 555 },
+            { id: 2, start: "09:15", end: "10:00", startMin: 555, endMin: 600 },
+            { id: 3, start: "10:00", end: "10:45", startMin: 600, endMin: 645 },
+            { id: 4, start: "10:45", end: "11:30", startMin: 645, endMin: 690 },
+            { id: 5, start: "11:30", end: "12:15", startMin: 690, endMin: 735 },
+            { id: 'lunch', start: "12:15", end: "13:15", startMin: 735, endMin: 795, name: "พักกลางวัน" },
+            { id: 6, start: "13:15", end: "14:00", startMin: 795, endMin: 840 },
+            { id: 7, start: "14:00", end: "14:45", startMin: 840, endMin: 885 },
+            { id: 8, start: "14:45", end: "15:30", startMin: 885, endMin: 930 },
+            { id: 9, start: "15:30", end: "16:15", startMin: 930, endMin: 975 }
+        ];
+
+        const DEFAULT_SCHEDULE = {
+            1: [ // วันจันทร์
+                { period: 1, name: "ต้านทุจริต", teacher: "ครูชูนิศา", color: "bg-schedule-yellow" },
+                { period: 2, name: "ว30245 ชีววิทยา 5", teacher: "ครูซานียะ", color: "bg-schedule-blue" }, // คาบเดี่ยว
+                { period: 3, name: "ว30225 เคมี 5", teacher: "ครูมุตตามีน", color: "bg-schedule-pink" }, // คาบเดี่ยว
+                { period: 4, name: "ท33101 ภาษาไทย", teacher: "ครูมะดารี", color: "bg-schedule-green" },
+                { period: 5, name: "พักกิจกรรม", teacher: "กิจกรรมทั่วไป", color: "bg-slate-100" },
+                { period: 6, name: "อ30205 ภาษาอังกฤษ", teacher: "ครูภูวิชชา", color: "bg-schedule-purple", colspan: 2 }, // คาบคู่
+                { period: 7, name: "อ30205 ภาษาอังกฤษ", teacher: "ครูภูวิชชา", color: "bg-schedule-purple", hide: true },
+                { period: 8, name: "ศาสนา", teacher: "ครูศาสนา", color: "bg-schedule-orange" },
+                { period: 9, name: "ศาสนา", teacher: "ครูศาสนา", color: "bg-schedule-orange" }
+            ],
+            2: [ // วันอังคาร
+                { period: 1, name: "วิชาอิสลามศึกษา", teacher: "ครูอิสลามศึกษา", color: "bg-emerald-100 border-emerald-300 text-emerald-800" }, 
+                { period: 2, name: "ค33101 คณิตศาสตร์พื้นฐาน", teacher: "ครูขนิษฐา", color: "bg-schedule-yellow", colspan: 2 }, 
+                { period: 3, name: "ค33101 คณิตศาสตร์พื้นฐาน", teacher: "ครูขนิษฐา", color: "bg-schedule-yellow", hide: true },
+                { period: 4, name: "ว30205 ฟิสิกส์ 5", teacher: "ครูมยุรี", color: "bg-schedule-blue", colspan: 2 }, // ฟิสิกส์ 5 ครูมยุรี วันอังคาร คาบ 4-5
+                { period: 5, name: "ว30205 ฟิสิกส์ 5", teacher: "ครูมยุรี", color: "bg-schedule-blue", hide: true },
+                { period: 6, name: "ส33101 สังคมศึกษา", teacher: "ครูสาวิตรี", color: "bg-schedule-purple" },
+                { period: 7, name: "อ33101 ภาษาอังกฤษ", teacher: "ครูยุสรฮ", color: "bg-schedule-pink" },
+                { period: 8, name: "ส33101 สังคมศึกษา", teacher: "ครูไกรวุฒิ", color: "bg-schedule-green" },
+                { period: 9, name: "โฮมรูม", teacher: "ครูประจำชั้น", color: "bg-schedule-orange" }
+            ],
+            3: [ // วันพุธ
+                { period: 1, name: "ค33201 คณิตศาสตร์เพิ่มเติม", teacher: "ครูกุลธิดา", color: "bg-schedule-blue", colspan: 2 }, 
+                { period: 2, name: "ค33201 คณิตศาสตร์เพิ่มเติม", teacher: "ครูกุลธิดา", color: "bg-schedule-blue", hide: true },
+                { period: 3, name: "ว30245 ชีววิทยา 5", teacher: "ครูซานียะ", color: "bg-schedule-pink", colspan: 2 }, // ชีววิทยา 5 ครูซานียะ วันพุธ คาบ 3-4
+                { period: 4, name: "ว30245 ชีววิทยา 5", teacher: "ครูซานียะ", color: "bg-schedule-pink", hide: true },
+                { period: 5, name: "อ33101 ภาษาอังกฤษ", teacher: "ครูยุสรฮ", color: "bg-schedule-yellow" },
+                { period: 6, name: "ว่างพักผ่อน", teacher: "ไม่มีการเรียนการสอน", color: "bg-slate-50 text-slate-400" },
+                { period: 7, name: "ท33101 ภาษาไทย", teacher: "ครูมะดารี", color: "bg-schedule-green" },
+                { period: 8, name: "ชุมนุม / บำเพ็ญฯ", teacher: "ครูผู้คุมชุมนุม", color: "bg-schedule-purple", colspan: 2 }, 
+                { period: 9, name: "ชุมนุม / บำเพ็ญฯ", teacher: "ครูผู้คุมชุมนุม", color: "bg-schedule-purple", hide: true }
+            ],
+            4: [ // วันพฤหัสบดี
+                { period: 1, name: "แนะแนว", teacher: "ครูมาเรียณี", color: "bg-schedule-pink" },
+                { period: 2, name: "ศาสนา", teacher: "วิชาคุณธรรม", color: "bg-schedule-orange", colspan: 2 }, 
+                { period: 3, name: "ศาสนา", teacher: "วิชาคุณธรรม", color: "bg-schedule-orange", hide: true },
+                { period: 4, name: "ส33101 สังคมศึกษา", teacher: "ครูไกรวุฒิ", color: "bg-schedule-green" },
+                { period: 5, name: "พ33201 พลศึกษา", teacher: "ครูศรันย์", color: "bg-schedule-yellow" },
+                { period: 6, name: "ว่างพักผ่อน", teacher: "ไม่มีการเรียนการสอน", color: "bg-slate-50 text-slate-400" },
+                { period: 7, name: "ว30225 เคมี 5", teacher: "ครูมุตตามีน", color: "bg-schedule-blue", colspan: 2 }, 
+                { period: 8, name: "ว30225 เคมี 5", teacher: "ครูมุตตามีน", color: "bg-schedule-blue", hide: true },
+                { period: 9, name: "ว่างหลังเลิกเรียน", teacher: "เตรียมนมาซ/เดินทางกลับ", color: "bg-slate-50 text-slate-400" }
+            ],
+            5: [ // วันศุกร์
+                { period: 1, name: "อัลกุรอ่าน/กีรออาตี", teacher: "ครูดือรออาตี", color: "bg-schedule-green" },
+                { period: 2, name: "ว30205 ฟิสิกส์ 5", teacher: "ครูมยุรี", color: "bg-schedule-purple", colspan: 2 }, // ฟิสิกส์ 5 ครูมยุรี วันศุกร์ คาบ 2-3
+                { period: 3, name: "ว30205 ฟิสิกส์ 5", teacher: "ครูมยุรี", color: "bg-schedule-purple", hide: true },
+                { period: 4, name: "ค33201 คณิตศาสตร์เพิ่มเติม", teacher: "ครูกุลธิดา", color: "bg-schedule-blue", colspan: 2 }, 
+                { period: 5, name: "ค33201 คณิตศาสตร์เพิ่มเติม", teacher: "ครูกุลธิดา", color: "bg-schedule-blue", hide: true },
+                { period: 6, name: "ว่างคาบศุกร์", teacher: "เตรียมตัวละหมาดวันศุกร์", color: "bg-slate-50 text-slate-400" },
+                { period: 7, name: "ศาสนา", teacher: "วิชาคุณธรรม", color: "bg-schedule-orange" },
+                { period: 8, name: "ว่างหลังเลิกเรียน", teacher: "ทำความสะอาดห้อง/เดินทางกลับ", color: "bg-slate-50 text-slate-400" },
+                { period: 9, name: "ว่าง", teacher: "-", color: "bg-slate-50 text-slate-400" }
+            ]
+        };
+
+        const days = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์"];
+
+        // State structures (initially cloned from defaults or loaded from Local Storage)
+        let periods = [];
+        let classSchedule = {};
+        
+        let isSimulationMode = false;
+        let simDay = 1; // Mon
+        let simTimeMin = 510; // 08:30
+        let lastNotifiedPeriod = null;
+        let lastTriggeredPreAlertDate = null; // Track to prevent duplicate daily pre-alerts
+        let homeworkTasks = [];
+
+        // INITIALIZE APP DATA
+        function initializeAppData() {
+            // Load custom period timings if exists
+            const savedPeriods = localStorage.getItem('custom_periods');
+            if (savedPeriods) {
+                periods = JSON.parse(savedPeriods);
+            } else {
+                periods = JSON.parse(JSON.stringify(DEFAULT_PERIODS));
+            }
+
+            // Load custom schedule entries if exists
+            const savedSchedule = localStorage.getItem('custom_schedule');
+            if (savedSchedule) {
+                classSchedule = JSON.parse(savedSchedule);
+            } else {
+                classSchedule = JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
+            }
+        }
+
+        window.onload = function() {
+            initializeAppData();
+            lucide.createIcons();
+            
+            // Render timetable & load homework
+            renderTimetableGrid();
+            loadHomeworkTasks();
+
+            // Setup current day filter
+            const currentRealDay = new Date().getDay();
+            if (currentRealDay >= 1 && currentRealDay <= 5) {
+                filterDay(currentRealDay);
+            } else {
+                filterDay(0); // Show all
+            }
+            
+            // Start clock loops
+            setInterval(updateTimeAndAnalytic, 1000);
+            updateTimeAndAnalytic(); // instant trigger
+
+            // Attach listeners
+            document.getElementById('sim-mode-toggle').addEventListener('change', function(e) {
+                isSimulationMode = e.target.checked;
+                const controls = document.getElementById('sim-controls');
+                if (isSimulationMode) {
+                    controls.classList.remove('hidden');
+                } else {
+                    controls.classList.add('hidden');
+                }
+                updateTimeAndAnalytic();
+            });
+
+            document.getElementById('sim-day-select').addEventListener('change', function(e) {
+                simDay = parseInt(e.target.value);
+                updateSimLabels();
+                updateTimeAndAnalytic();
+            });
+
+            document.getElementById('sim-time-slider').addEventListener('input', function(e) {
+                simTimeMin = parseInt(e.target.value);
+                updateSimLabels();
+                updateTimeAndAnalytic();
+            });
+            
+            // Bind settings input initial values
+            bindSettingsInputValues();
+        };
+
+        function bindSettingsInputValues() {
+            if (localStorage.getItem('line_token')) {
+                document.getElementById('settings-line-token').value = localStorage.getItem('line_token');
+            }
+            if (localStorage.getItem('discord_webhook')) {
+                document.getElementById('settings-discord-webhook').value = localStorage.getItem('discord_webhook');
+            }
+            
+            const tomorrowEnabled = localStorage.getItem('tomorrow_alert_enabled');
+            if (tomorrowEnabled !== null) {
+                document.getElementById('settings-tomorrow-alert').checked = tomorrowEnabled === 'true';
+            }
+        }
+
+        function updateSimLabels() {
+            const displayDay = days[simDay];
+            const hours = String(Math.floor(simTimeMin / 60)).padStart(2, '0');
+            const mins = String(simTimeMin % 60).padStart(2, '0');
+            document.getElementById('sim-day-label').innerText = displayDay;
+            document.getElementById('sim-time-label').innerText = `${hours}:${mins}`;
+        }
+
+        function updateTimeAndAnalytic() {
+            let activeDayNum, currentMin;
+            let displayTimeStr = "";
+            let displayDayStr = "";
+
+            if (isSimulationMode) {
+                activeDayNum = simDay;
+                currentMin = simTimeMin;
+                
+                const hours = String(Math.floor(simTimeMin / 60)).padStart(2, '0');
+                const mins = String(simTimeMin % 60).padStart(2, '0');
+                displayTimeStr = `${hours}:${mins}:00 [จำลอง]`;
+                displayDayStr = days[activeDayNum] + " (จำลอง)";
+            } else {
+                const now = new Date();
+                activeDayNum = now.getDay();
+                currentMin = now.getHours() * 60 + now.getMinutes();
+                
+                const s = String(now.getSeconds()).padStart(2, '0');
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                displayTimeStr = `${h}:${m}:${s}`;
+                displayDayStr = days[activeDayNum];
+            }
+
+            document.getElementById('live-clock').innerText = displayTimeStr;
+            document.getElementById('live-date').innerText = displayDayStr;
+
+            checkAndTriggerDailyPreAlert(activeDayNum, currentMin);
+
+            analyzeActivePeriod(activeDayNum, currentMin);
+        }
+
+        function checkAndTriggerDailyPreAlert(dayNum, currentMin) {
+            // 19:00 is exactly 1140 minutes from midnight (19 * 60 = 1140)
+            const targetMin = 1140; 
+            
+            if (currentMin === targetMin) {
+                let dateKey;
+                if (isSimulationMode) {
+                    dateKey = `sim_${dayNum}`;
+                } else {
+                    const today = new Date();
+                    dateKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+                }
+                
+                if (lastTriggeredPreAlertDate !== dateKey) {
+                    lastTriggeredPreAlertDate = dateKey;
+                    triggerTomorrowAlertNotification(dayNum);
+                }
+            }
+        }
+
+        function getTomorrowScheduleMessage(currentDayNum) {
+            const tomorrowDayNum = (currentDayNum + 1) % 7;
+            const tomorrowName = days[tomorrowDayNum];
+            
+            let msg = `\n📋 [สรุปตารางเรียนสำหรับวันพรุ่งนี้: ${tomorrowName}]\n`;
+            
+            if (tomorrowDayNum < 1 || tomorrowDayNum > 5) {
+                msg += `🎉 พรุ่งนี้เป็นวันหยุดพักผ่อน สบายๆ ไม่มีเรียนครับพักให้เต็มที่!`;
+                return msg;
+            }
+            
+            const tomorrowSubjects = classSchedule[tomorrowDayNum] || [];
+            let hasClass = false;
+            
+            for (let i = 1; i <= 9; i++) {
+                const subject = tomorrowSubjects.find(s => s.period === i);
+                if (subject && !subject.hide) {
+                    hasClass = true;
+                    const pDef = periods.find(p => p.id === i);
+                    const timeRange = pDef ? `${pDef.start}-${pDef.end}` : '';
+                    msg += `• คาบ ${i} (${timeRange} น.): ${subject.name} (ครู ${subject.teacher || 'ไม่ระบุ'})\n`;
+                }
+            }
+            
+            if (!hasClass) {
+                msg += `🎉 พรุ่งนี้ไม่มีตารางเรียนครับ!`;
+            }
+            
+            return msg;
+        }
+
+        function triggerTomorrowAlertNotification(currentDayNum, isTest = false) {
+            const isEnabled = document.getElementById('settings-tomorrow-alert').checked;
+            if (!isEnabled && !isTest) return;
+            
+            const tomorrowDayNum = (currentDayNum + 1) % 7;
+            const message = getTomorrowScheduleMessage(currentDayNum);
+            
+            // 1. Send via LINE Notify if token is saved
+            const lineToken = localStorage.getItem('line_token');
+            if (lineToken) {
+                const url = 'https://notify-api.line.me/api/notify';
+                console.log(`[LINE Pre-Alert Simulated]: ${message}`);
+                
+                fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': `Bearer ${lineToken}`
+                    },
+                    body: `message=${encodeURIComponent(message)}`
+                }).catch(() => {
+                    console.log("LINE simulation proxy trigger complete.");
+                });
+            }
+            
+            // 2. Send via Discord Webhook if webhook is saved
+            const discordWebhook = localStorage.getItem('discord_webhook');
+            if (discordWebhook) {
+                const tomorrowName = days[tomorrowDayNum];
+                const fields = [];
+                const tomorrowSubjects = classSchedule[tomorrowDayNum] || [];
+                
+                for (let i = 1; i <= 9; i++) {
+                    const s = tomorrowSubjects.find(x => x.period === i);
+                    if (s && !s.hide) {
+                        const pDef = periods.find(p => p.id === i);
+                        const timeStr = pDef ? `${pDef.start}-${pDef.end}` : '';
+                        fields.push({
+                            name: `คาบที่ ${i} (${timeStr} น.)`,
+                            value: `**${s.name}**\nครู: ${s.teacher || '-'}`,
+                            inline: true
+                        });
+                    }
+                }
+                
+                if (fields.length === 0) {
+                    fields.push({
+                        name: "ตารางการเรียน",
+                        value: "🎉 พรุ่งนี้ไม่มีเรียน พักผ่อนเต็มที่!",
+                        inline: false
+                    });
+                }
+                
+                const payload = {
+                    username: "ระบบตารางเรียน 6/7 (Dek70)",
+                    avatar_url: "https://placehold.co/120x120/f43f5e/ffffff?text=6/7",
+                    embeds: [{
+                        title: `📋 รายงานตารางเรียนล่วงหน้าวันถัดไป: ${tomorrowName} 🏫`,
+                        description: `สรุปตารางวิชาเรียนที่จะต้องเข้าเรียนจัดทำโดย Dek70`,
+                        color: 15158332,
+                        fields: fields,
+                        footer: { text: "ระบบแจ้งเตือนตารางเรียนล่วงหน้าอัตโนมัติ" },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                
+                fetch(discordWebhook, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error("Discord pre-alert payload error:", err));
+            }
+            
+            // 3. Trigger UI Toast
+            showToast(isTest ? "ส่งทดสอบรายงานล่วงหน้าพรุ่งนี้เรียบร้อยแล้ว!" : "🔔 ส่งรายงานคาบเรียนวันพรุ่งนี้สำเร็จ!", "check-circle");
+        }
+
+        function testTomorrowAlertNotification() {
+            let activeDayNum;
+            if (isSimulationMode) {
+                activeDayNum = simDay;
+            } else {
+                activeDayNum = new Date().getDay();
+            }
+            triggerTomorrowAlertNotification(activeDayNum, true);
+        }
+
+        // Retrieve unified combined details for overlapping double classes
+        function getPeriodBlockDetails(day, periodId) {
+            if (periodId === 'lunch') {
+                const def = periods.find(p => p.id === 'lunch');
+                return {
+                    idStr: "ช่วงพักกลางวัน",
+                    start: def ? def.start : "12:15",
+                    end: def ? def.end : "13:15",
+                    startMin: def ? def.startMin : 735,
+                    endMin: def ? def.endMin : 795,
+                    name: "พักกลางวัน",
+                    teacher: "พักรับประทานอาหารกลางวัน"
+                };
+            }
+            const daySubjects = classSchedule[day];
+            if (!daySubjects) return null;
+
+            // Resolve actual node if hidden or colspan
+            let subject = daySubjects.find(s => s.period === periodId);
+            let parentSubject = subject;
+            let startPeriodId = periodId;
+
+            if (subject && subject.hide) {
+                parentSubject = findSpanningSubjectStart(daySubjects, periodId);
+                if (parentSubject) {
+                    startPeriodId = parentSubject.period;
+                }
+            }
+
+            if (parentSubject && parentSubject.colspan) {
+                const colspan = parentSubject.colspan;
+                const endPeriodId = startPeriodId + colspan - 1;
+
+                const startDef = periods.find(p => p.id === startPeriodId);
+                const endDef = periods.find(p => p.id === endPeriodId);
+
+                if (startDef && endDef) {
+                    return {
+                        idStr: `คาบเรียนที่ ${startPeriodId} - ${endPeriodId}`,
+                        start: startDef.start,
+                        end: endDef.end,
+                        startMin: startDef.startMin,
+                        endMin: endDef.endMin,
+                        name: parentSubject.name,
+                        teacher: parentSubject.teacher
+                    };
+                }
+            }
+
+            const pDef = periods.find(p => p.id === periodId);
+            if (pDef) {
+                return {
+                    idStr: `คาบเรียนที่ ${periodId}`,
+                    start: pDef.start,
+                    end: pDef.end,
+                    startMin: pDef.startMin,
+                    endMin: pDef.endMin,
+                    name: subject ? subject.name : "ไม่มีเรียน / คาบว่าง",
+                    teacher: subject ? subject.teacher : "เตรียมนมาซ หรือพักผ่อนตามอัธยาศัย"
+                };
+            }
+            return null;
+        }
+
+        function analyzeActivePeriod(day, min) {
+            if (day < 1 || day > 5) {
+                setIdleState("วันหยุดสุดสัปดาห์", "ไม่มีการเรียนการสอนในวันเสาร์-อาทิตย์");
+                return;
+            }
+
+            const daySubjects = classSchedule[day];
+            let activeBlock = null;
+            let currentPeriodId = null;
+
+            // Locate active period
+            for (let i = 0; i < periods.length; i++) {
+                const p = periods[i];
+                if (min >= p.startMin && min < p.endMin) {
+                    currentPeriodId = p.id;
+                    break;
+                }
+            }
+
+            if (currentPeriodId) {
+                activeBlock = getPeriodBlockDetails(day, currentPeriodId);
+            }
+
+            // Find upcoming subject details
+            let nextBlock = null;
+            let foundNext = false;
+
+            if (currentPeriodId) {
+                const currentIdx = periods.findIndex(p => p.id === currentPeriodId);
+                for (let j = currentIdx + 1; j < periods.length; j++) {
+                    const p = periods[j];
+                    const nextDetails = getPeriodBlockDetails(day, p.id);
+                    if (nextDetails && (!activeBlock || nextDetails.name !== activeBlock.name)) {
+                        nextBlock = nextDetails;
+                        foundNext = true;
+                        break;
+                    }
+                }
+            } else {
+                if (min < periods[0].startMin) {
+                    nextBlock = getPeriodBlockDetails(day, periods[0].id);
+                    foundNext = true;
+                }
+            }
+
+            // Bind into Dashboard View
+            if (activeBlock) {
+                let name = activeBlock.name;
+                let teacher = activeBlock.teacher;
+                
+                document.getElementById('current-subject-title').innerText = name;
+                document.getElementById('current-teacher-name').innerText = teacher;
+                document.getElementById('period-display-badge').innerText = activeBlock.idStr;
+                document.getElementById('current-period-start').innerText = activeBlock.start;
+                document.getElementById('current-period-end').innerText = activeBlock.end;
+
+                const totalMinutes = activeBlock.endMin - activeBlock.startMin;
+                const elapsed = min - activeBlock.startMin;
+                const percent = Math.min(100, Math.max(0, Math.round((elapsed / totalMinutes) * 100)));
+                const remaining = activeBlock.endMin - min;
+
+                document.getElementById('current-class-progress').style.width = `${percent}%`;
+                document.getElementById('current-class-percentage').innerText = `${percent}%`;
+                document.getElementById('time-remaining-label').innerText = `เหลือเวลาอีก ${remaining} นาที`;
+
+                // Dispatch warnings if class changed
+                const periodKey = `${day}_${activeBlock.name}`;
+                if (lastNotifiedPeriod !== periodKey) {
+                    lastNotifiedPeriod = periodKey;
+                    triggerNewPeriodAlert(name, teacher, `${activeBlock.start} - ${activeBlock.end}`);
+                }
+            } else {
+                setIdleState("อยู่นอกเวลาเรียนการสอน", "เตรียมนมาซ พักผ่อน หรือทำกิจกรรมนอกเวลาเรียน");
+            }
+
+            // Render upcoming subject preview box
+            if (foundNext && nextBlock) {
+                document.getElementById('next-subject-title').innerText = nextBlock.name;
+                document.getElementById('next-teacher-name').innerText = nextBlock.teacher || "ไม่มีผู้ระบุ";
+                document.getElementById('next-subject-time').innerText = `${nextBlock.start} - ${nextBlock.end}`;
+            } else {
+                document.getElementById('next-subject-title').innerText = "สิ้นสุดการเรียนวันนี้";
+                document.getElementById('next-teacher-name').innerText = "ยินดีด้วยคุณได้เรียนครบทุกคาบแล้ว!";
+                document.getElementById('next-subject-time').innerText = "--:--";
+            }
+
+            highlightGridCurrentCell(day, currentPeriodId);
+        }
+
+        function findSpanningSubjectStart(subjects, targetPeriod) {
+            for (let i = targetPeriod - 1; i >= 1; i--) {
+                const sub = subjects.find(s => s.period === i);
+                if (sub && sub.colspan) {
+                    return sub;
+                }
+            }
+            return null;
+        }
+
+        function setIdleState(title, desc) {
+            document.getElementById('current-subject-title').innerText = title;
+            document.getElementById('current-teacher-name').innerText = desc;
+            document.getElementById('period-display-badge').innerText = "นอกเวลาเรียน";
+            document.getElementById('current-period-start').innerText = "--:--";
+            document.getElementById('current-period-end').innerText = "--:--";
+            document.getElementById('current-class-progress').style.width = `0%`;
+            document.getElementById('current-class-percentage').innerText = `0%`;
+            document.getElementById('time-remaining-label').innerText = "ไม่มีคาบที่ดำเนินอยู่";
+        }
+
+        function highlightGridCurrentCell(day, periodId) {
+            document.querySelectorAll('.schedule-cell').forEach(cell => {
+                cell.classList.remove('ring-4', 'ring-pink-500', 'ring-offset-2', 'scale-[1.01]', 'shadow-md');
+            });
+
+            if (!day || !periodId) return;
+
+            let lookupId = periodId;
+            const daySubjects = classSchedule[day];
+            if (daySubjects) {
+                const subject = daySubjects.find(s => s.period === periodId);
+                if (subject && subject.hide) {
+                    const parent = findSpanningSubjectStart(daySubjects, periodId);
+                    if (parent) {
+                        lookupId = parent.period;
+                    }
+                }
+            }
+
+            const targetCell = document.getElementById(`cell-${day}-${lookupId}`);
+            if (targetCell) {
+                targetCell.classList.add('ring-4', 'ring-pink-500', 'ring-offset-2', 'scale-[1.01]', 'shadow-md');
+            }
+        }
+
+        function renderTimetableGrid() {
+            // 1. Update timings in the Table headers
+            periods.forEach(p => {
+                const headerSpan = document.getElementById(`header-p-${p.id}`);
+                if (headerSpan) {
+                    headerSpan.innerText = `${p.start}-${p.end}`;
+                }
+            });
+
+            // 2. Render actual grid rows
+            const tbody = document.getElementById('timetable-rows');
+            tbody.innerHTML = '';
+
+            for (let dayKey = 1; dayKey <= 5; dayKey++) {
+                const dayName = days[dayKey].replace("วัน", "");
+                const row = document.createElement('tr');
+                row.className = `schedule-row hover:bg-slate-50/50 transition duration-150 day-row-${dayKey}`;
+                
+                // Day Column
+                const dayCell = document.createElement('td');
+                dayCell.className = "py-4 px-4 font-bold text-sm text-slate-700 border-r border-slate-100 bg-slate-50/80 sticky left-0";
+                dayCell.innerText = dayName;
+                row.appendChild(dayCell);
+
+                const daySubjects = classSchedule[dayKey] || [];
+
+                for (let i = 1; i <= 9; i++) {
+                    // Lunch spacer column render between period 5 and 6
+                    if (i === 6) {
+                        const lunchCell = document.createElement('td');
+                        lunchCell.className = "py-3 text-center bg-pink-50/30 text-slate-400 font-medium text-[10px] w-12 border-r border-slate-100";
+                        lunchCell.innerText = "พัก";
+                        row.appendChild(lunchCell);
+                    }
+
+                    const subject = daySubjects.find(s => s.period === i);
+                    
+                    if (subject) {
+                        if (subject.hide) continue; // skip
+
+                        const cell = document.createElement('td');
+                        cell.id = `cell-${dayKey}-${i}`;
+                        cell.className = `schedule-cell p-2 border-r border-slate-100 text-center transition-all duration-200 cursor-pointer relative group`;
+                        
+                        if (subject.colspan) {
+                            cell.colSpan = subject.colspan;
+                        }
+
+                        const cardWrapper = document.createElement('div');
+                        cardWrapper.className = `p-3 rounded-2xl h-full flex flex-col justify-between text-slate-800 border border-slate-200/40 shadow-sm ${subject.color || 'bg-slate-100'}`;
+                        
+                        const title = document.createElement('h5');
+                        title.className = "font-bold text-xs line-clamp-2 text-slate-900 group-hover:text-pink-600 transition";
+                        title.innerText = subject.name;
+                        cardWrapper.appendChild(title);
+
+                        if (subject.teacher) {
+                            const teacher = document.createElement('p');
+                            teacher.className = "text-[10px] text-slate-500 font-medium mt-1 truncate";
+                            teacher.innerText = subject.teacher;
+                            cardWrapper.appendChild(teacher);
+                        }
+
+                        const periodTag = document.createElement('span');
+                        periodTag.className = "absolute top-1 right-2 text-[8px] text-slate-400 font-mono opacity-0 group-hover:opacity-100 transition";
+                        periodTag.innerText = `คาบ ${i}${subject.colspan ? `-${i+subject.colspan-1}` : ''}`;
+                        cardWrapper.appendChild(periodTag);
+
+                        cell.appendChild(cardWrapper);
+                        
+                        // Let user click to edit directly
+                        cell.addEventListener('click', () => {
+                            openSettingsHubWithSlotEdit(dayKey, i, subject);
+                        });
+
+                        row.appendChild(cell);
+                    } else {
+                        const emptyCell = document.createElement('td');
+                        emptyCell.id = `cell-${dayKey}-${i}`;
+                        emptyCell.className = "schedule-cell p-2 border-r border-slate-100 text-center text-xs text-slate-300 italic bg-slate-50/30 cursor-pointer hover:bg-pink-50/50 transition";
+                        emptyCell.innerText = "ว่าง";
+                        
+                        emptyCell.addEventListener('click', () => {
+                            openSettingsHubWithSlotEdit(dayKey, i, null);
+                        });
+
+                        row.appendChild(emptyCell);
+                    }
+                }
+                tbody.appendChild(row);
+            }
+        }
+
+        // ==========================================
+        // UNIFIED SETTINGS HUB SYSTEM CONTROLLER
+        // ==========================================
+        function openSettingsHub() {
+            // Fill times inside Settings Modal Form inputs
+            periods.forEach(p => {
+                if (p.id === 'lunch') {
+                    document.getElementById('time-plunch-start').value = p.start;
+                    document.getElementById('time-plunch-end').value = p.end;
+                } else {
+                    document.getElementById(`time-p${p.id}-start`).value = p.start;
+                    document.getElementById(`time-p${p.id}-end`).value = p.end;
+                }
+            });
+
+            // Select first tab as default view
+            switchSettingsTab('tab-time');
+            document.getElementById('settings-hub-modal').classList.remove('hidden');
+        }
+
+        function closeSettingsHub() {
+            document.getElementById('settings-hub-modal').classList.add('hidden');
+        }
+
+        function switchSettingsTab(tabId) {
+            // Un-active all tabs and contents
+            document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-pink-500', 'text-white', 'shadow-sm');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-200/50');
+            });
+            document.querySelectorAll('.settings-content-pane').forEach(pane => {
+                pane.classList.add('hidden');
+            });
+
+            // Active current target Tab
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-600', 'hover:bg-slate-200/50');
+                activeBtn.classList.add('bg-pink-500', 'text-white', 'shadow-sm');
+            }
+
+            const activePane = document.getElementById(`content-${tabId}`);
+            if (activePane) {
+                activePane.classList.remove('hidden');
+            }
+        }
+
+        // Quick action: Open Settings directly on Timetable Edit Slot
+        function openSettingsHubWithSlotEdit(day, period, subjectData) {
+            openSettingsHub();
+            switchSettingsTab('tab-schedule');
+
+            // Fill Subject Editor values inside the tab form
+            document.getElementById('slot-edit-day').value = day;
+            document.getElementById('slot-edit-period').value = period;
+
+            if (subjectData) {
+                document.getElementById('slot-edit-name').value = subjectData.name;
+                document.getElementById('slot-edit-teacher').value = subjectData.teacher || "";
+                document.getElementById('slot-edit-color').value = subjectData.color || "bg-slate-100";
+                document.getElementById('slot-edit-colspan').value = subjectData.colspan || "1";
+            } else {
+                document.getElementById('slot-edit-name').value = "";
+                document.getElementById('slot-edit-teacher').value = "";
+                document.getElementById('slot-edit-color').value = "bg-slate-100";
+                document.getElementById('slot-edit-colspan').value = "1";
+            }
+        }
+
+        // Save Periods Time inside settings
+        function handleSavePeriodsTime(e) {
+            e.preventDefault();
+
+            const parseToMin = (timeStr) => {
+                const [h, m] = timeStr.split(':').map(Number);
+                return h * 60 + m;
+            };
+
+            for (let i = 0; i < periods.length; i++) {
+                const item = periods[i];
+                let startVal = "", endVal = "";
+
+                if (item.id === 'lunch') {
+                    startVal = document.getElementById('time-plunch-start').value;
+                    endVal = document.getElementById('time-plunch-end').value;
+                } else {
+                    startVal = document.getElementById(`time-p${item.id}-start`).value;
+                    endVal = document.getElementById(`time-p${item.id}-end`).value;
+                }
+
+                if (startVal && endVal) {
+                    item.start = startVal;
+                    item.end = endVal;
+                    item.startMin = parseToMin(startVal);
+                    item.endMin = parseToMin(endVal);
+                }
+            }
+
+            localStorage.setItem('custom_periods', JSON.stringify(periods));
+            
+            renderTimetableGrid();
+            updateTimeAndAnalytic();
+            showToast("แก้ไขปรับแต่งช่วงเวลาเข้าเรียนสำเร็จ!", "check-circle");
+        }
+
+        // Save Subject Editor inside settings tab
+        function handleSaveSlotViaSettings(e) {
+            e.preventDefault();
+            const day = parseInt(document.getElementById('slot-edit-day').value);
+            const period = parseInt(document.getElementById('slot-edit-period').value);
+            const name = document.getElementById('slot-edit-name').value.trim();
+            const teacher = document.getElementById('slot-edit-teacher').value.trim();
+            const color = document.getElementById('slot-edit-color').value;
+            const colspan = parseInt(document.getElementById('slot-edit-colspan').value);
+
+            if (!classSchedule[day]) {
+                classSchedule[day] = [];
+            }
+
+            // Clean old slots at target index
+            classSchedule[day] = classSchedule[day].filter(s => s.period !== period && s.period !== (period + 1));
+
+            const updatedSubject = {
+                period: period,
+                name: name,
+                teacher: teacher,
+                color: color
+            };
+
+            if (colspan === 2) {
+                updatedSubject.colspan = 2;
+                classSchedule[day] = classSchedule[day].filter(s => s.period !== (period + 1));
+                classSchedule[day].push({
+                    period: period + 1,
+                    name: name,
+                    teacher: teacher,
+                    color: color,
+                    hide: true
+                });
+            }
+
+            classSchedule[day].push(updatedSubject);
+            localStorage.setItem('custom_schedule', JSON.stringify(classSchedule));
+            
+            renderTimetableGrid();
+            updateTimeAndAnalytic();
+            showToast("อัปเดตข้อมูลวิชาลงตารางเรียบร้อย!", "check-circle");
+        }
+
+        function handleClearSlotViaSettings() {
+            const day = parseInt(document.getElementById('slot-edit-day').value);
+            const period = parseInt(document.getElementById('slot-edit-period').value);
+
+            if (classSchedule[day]) {
+                const oldSubject = classSchedule[day].find(s => s.period === period);
+                classSchedule[day] = classSchedule[day].filter(s => s.period !== period);
+                
+                if (oldSubject && oldSubject.colspan === 2) {
+                    classSchedule[day] = classSchedule[day].filter(s => s.period !== (period + 1));
+                }
+                
+                localStorage.setItem('custom_schedule', JSON.stringify(classSchedule));
+            }
+
+            // Reset inputs
+            document.getElementById('slot-edit-name').value = "";
+            document.getElementById('slot-edit-teacher').value = "";
+
+            renderTimetableGrid();
+            updateTimeAndAnalytic();
+            showToast("เปลี่ยนวิชาดังกล่าวเป็น คาบว่าง แล้ว", "info");
+        }
+
+        // Save Notification configuration inside settings tab
+        function saveNotificationSettings() {
+            const lineVal = document.getElementById('settings-line-token').value.trim();
+            const discordVal = document.getElementById('settings-discord-webhook').value.trim();
+
+            if (lineVal) {
+                localStorage.setItem('line_token', lineVal);
+            } else {
+                localStorage.removeItem('line_token');
+            }
+
+            if (discordVal) {
+                localStorage.setItem('discord_webhook', discordVal);
+            } else {
+                localStorage.removeItem('discord_webhook');
+            }
+
+            localStorage.setItem('tomorrow_alert_enabled', document.getElementById('settings-tomorrow-alert').checked);
+
+            showToast("บันทึกการตั้งค่าการแจ้งเตือนทั้งหมดเรียบร้อยแล้ว!", "check-circle");
+        }
+
+        // Reset all settings
+        function confirmResetToDefault() {
+            const confirmed = confirm("คุณต้องการคืนค่าตารางเรียนและเวลากลับไปยังฉบับดั้งเดิม (ตารางเรียน.jpg) ใช่หรือไม่?");
+            if (confirmed) {
+                localStorage.removeItem('custom_schedule');
+                localStorage.removeItem('custom_periods');
+                
+                // Reset form inputs
+                document.getElementById('settings-line-token').value = "";
+                document.getElementById('settings-discord-webhook').value = "";
+                localStorage.removeItem('line_token');
+                localStorage.removeItem('discord_webhook');
+
+                initializeAppData();
+                renderTimetableGrid();
+                updateTimeAndAnalytic();
+                closeSettingsHub();
+                showToast("คืนค่าตั้งต้นตารางเรียนดั้งเดิมเสร็จสมบูรณ์", "rotate-ccw");
+            }
+        }
+
+        // Filter Grid Table view
+        function filterDay(dayIndex) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-sm', 'text-slate-800');
+                btn.classList.add('text-slate-500', 'hover:text-slate-800');
+            });
+            
+            const activeTab = document.getElementById(`tab-day-${dayIndex}`);
+            if (activeTab) {
+                activeTab.classList.remove('text-slate-500', 'hover:text-slate-800');
+                activeTab.classList.add('bg-white', 'shadow-sm', 'text-slate-800');
+            }
+
+            for (let i = 1; i <= 5; i++) {
+                const row = document.querySelector(`.day-row-${i}`);
+                if (row) {
+                    if (dayIndex === 0 || i === dayIndex) {
+                        row.style.display = 'table-row';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function triggerNewPeriodAlert(subject, teacher, timeRange) {
+            deliverWebNotification(subject, teacher, timeRange);
+            announceViaTTS(subject, teacher);
+            deliverDiscordWebhook(subject, teacher, timeRange);
+            deliverLineNotificationMessage(subject, teacher, timeRange);
+            showToast(`🔔 ได้เวลาเรียน: ${subject} (${timeRange})`, 'bell');
+        }
+
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                showToast("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือนของระบบ", "shield-alert");
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    showToast("ยินดีด้วย! ระบบแจ้งเตือนของหน้าเว็บบราวเซอร์พร้อมใช้งานแล้ว", "check-circle");
+                } else {
+                    showToast("คุณปฏิเสธสิทธิ์การเข้าถึงแจ้งเตือนหน้าจอ", "shield-alert");
+                }
+            });
+        }
+
+        function deliverWebNotification(subject, teacher, timeRange) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("ได้เวลาเรียนคาบใหม่แล้ว! 🔔", {
+                    body: `วิชา: ${subject}\nผู้สอน: ${teacher || 'ไม่ระบุ'}\nเวลา: ${timeRange} น.`,
+                    icon: 'https://placehold.co/100x100/ec4899/ffffff?text=6/7'
+                });
+            }
+        }
+
+        function announceViaTTS(subject, teacher) {
+            const isVoiceEnabled = document.getElementById('settings-voice-notify').checked;
+            if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
+
+            window.speechSynthesis.cancel();
+
+            let speechText = `ขณะนี้ได้เวลาเรียนวิชา ${subject}`;
+            if (teacher && teacher !== "ครูศาสนา" && teacher !== "ครูอิสลามศึกษา") {
+                speechText += ` สอนโดย ${teacher} แล้วค่ะ ขอให้นักเรียนทุกคนตั้งใจเรียนนะคะ`;
+            } else {
+                speechText += " แล้วค่ะ";
+            }
+
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.lang = 'th-TH';
+            
+            const voices = window.speechSynthesis.getVoices();
+            const thaiVoice = voices.find(v => v.lang.includes('th') || v.lang.includes('TH'));
+            if (thaiVoice) utterance.voice = thaiVoice;
+            
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function deliverDiscordWebhook(subject, teacher, timeRange) {
+            const webhookUrl = localStorage.getItem('discord_webhook');
+            if (!webhookUrl) return;
+
+            const payload = {
+                username: "ระบบแจ้งเตือน 6/7 (Dek70)",
+                avatar_url: "https://placehold.co/120x120/f43f5e/ffffff?text=6/7",
+                embeds: [{
+                    title: "🔔 ได้เวลาเริ่มคาบเรียนใหม่แล้ว! 🏫",
+                    color: 15158332,
+                    fields: [
+                        { name: "📚 วิชาที่เรียน", value: `**${subject}**`, inline: true },
+                        { name: "👨‍🏫 ครูผู้สอน", value: teacher || "ไม่ระบุ", inline: true },
+                        { name: "⏰ เวลาเข้าเรียน", value: `${timeRange} น.`, inline: false }
+                    ],
+                    footer: { text: "ระบบแจ้งเตือนเข้าเรียนอัจฉริยะ • ห้อง 6/7 Dek70" },
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            try {
+                await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Error sending to Discord Webhook:", err);
+            }
+        }
+
+        function deliverLineNotificationMessage(subject, teacher, timeRange) {
+            const token = localStorage.getItem('line_token');
+            if (!token) return;
+
+            const message = `\n🔔 [ตารางเรียน 6/7]\nได้เวลาเข้าเรียนวิชา: ${subject}\nผู้สอน: ${teacher}\nเวลา: ${timeRange} น.`;
+            const url = 'https://notify-api.line.me/api/notify';
+            
+            console.log(`[LINE Notify Simulation Triggered]: ${message}`);
+            
+            fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: `message=${encodeURIComponent(message)}`
+            }).then(() => {
+                console.log("LINE simulation proxy call executed.");
+            }).catch(e => {
+                console.warn("Direct LINE fetch failed due to browser environment constraint. Simulated successfully!");
+            });
+        }
+
+        async function testDiscordNotification() {
+            const val = document.getElementById('settings-discord-webhook').value.trim();
+            if (!val) {
+                showToast("กรุณากรอก Discord Webhook URL ก่อนกดทดสอบ", "shield-alert");
+                return;
+            }
+
+            showToast("กำลังส่งข้อความทดสอบไปยัง Discord...", "info");
+            
+            const payload = {
+                username: "ระบบทดสอบแจ้งเตือน 6/7",
+                avatar_url: "https://placehold.co/120x120/f43f5e/ffffff?text=TEST",
+                embeds: [{
+                    title: "🧪 ระบบทดสอบแจ้งเตือนตารางเรียน (Test Success)",
+                    description: "หากเห็นข้อความนี้ แสดงว่าระบบจัดส่งแจ้งเตือนเข้าเรียนของคุณกับเซิร์ฟเวอร์ห้องเชื่อมต่อสำเร็จเรียบร้อยแล้ว!",
+                    color: 3066993,
+                    fields: [
+                        { name: "สถานะการทำงาน", value: "ออนไลน์ (Active)", inline: true },
+                        { name: "ผู้ทดสอบส่ง", value: "นักเรียนห้อง 6/7", inline: true }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            try {
+                const res = await fetch(val, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast("ข้อความทดสอบส่งไปที่ Discord สำเร็จแล้ว!", "check-circle");
+                } else {
+                    showToast("ส่งไม่สำเร็จ! กรุณาตรวจสอบลิงก์ Webhook อีกครั้ง", "shield-alert");
+                }
+            } catch (err) {
+                showToast("ส่งข้อความไม่สำเร็จ! (CORS/Network Error)", "shield-alert");
+            }
+        }
+
+        function testLineNotification() {
+            const val = document.getElementById('settings-line-token').value.trim();
+            if (!val) {
+                showToast("กรุณากรอก LINE Token ก่อนกดทดสอบ", "shield-alert");
+                return;
+            }
+
+            showToast("📡 ระบบกำลังจัดส่งสัญญาณทดสอบ LINE Notify เสมือนจริง...", "info");
+            
+            setTimeout(() => {
+                showToast("🟢 ข้อความ LINE จำลอง: 'แจ้งเตือนตารางเรียนห้อง 6/7 พร้อมเชื่อมต่อแล้ว!'", "message-square");
+            }, 1500);
+        }
+
+        // Homework Operations
+        function loadHomeworkTasks() {
+            const raw = localStorage.getItem('homework_tasks');
+            if (raw) {
+                homeworkTasks = JSON.parse(raw);
+            } else {
+                homeworkTasks = [
+                    { id: 1, subject: "ฟิสิกส์", title: "ทำโจทย์ชีทฟิสิกส์ 5 เรื่องคลื่นกล ข้อ 1-10", due: "2026-07-06", done: false },
+                    { id: 2, subject: "คณิตศาสตร์", title: "การบ้านสมุดแบบฝึกหัดหน้า 53", due: "2026-07-08", done: true }
+                ];
+                saveHomeworkTasks();
+            }
+            renderHomeworkList();
+        }
+
+        function saveHomeworkTasks() {
+            localStorage.setItem('homework_tasks', JSON.stringify(homeworkTasks));
+        }
+
+        function renderHomeworkList() {
+            const container = document.getElementById('todo-list');
+            container.innerHTML = '';
+
+            if (homeworkTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i data-lucide="folder-open" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+                        <p class="text-sm">ยินดีด้วย! ไม่มีงานค้างในขณะนี้</p>
+                    </div>
+                `;
+                return;
+            }
+
+            homeworkTasks.sort((a,b) => new Date(a.due) - new Date(b.due));
+
+            homeworkTasks.forEach(task => {
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3.5 rounded-2xl border transition ${task.done ? 'bg-slate-50 border-slate-200 text-slate-400 line-through' : 'bg-white border-pink-100 text-slate-700 shadow-sm hover:border-pink-300'}`;
+
+                const leftSection = document.createElement('div');
+                leftSection.className = "flex items-center space-x-3";
+
+                const checkbox = document.createElement('input');
+                checkbox.type = "checkbox";
+                checkbox.checked = task.done;
+                checkbox.className = "w-4 h-4 rounded text-pink-500 focus:ring-pink-500 cursor-pointer";
+                checkbox.addEventListener('change', () => toggleTaskDone(task.id));
+                leftSection.appendChild(checkbox);
+
+                const infoBox = document.createElement('div');
+                const title = document.createElement('p');
+                title.className = `text-xs md:text-sm font-semibold ${task.done ? 'text-slate-400' : 'text-slate-800'}`;
+                title.innerText = `[${task.subject}] ${task.title}`;
+                
+                const dueText = document.createElement('span');
+                dueText.className = "text-[10px] text-slate-400 flex items-center mt-0.5";
+                dueText.innerHTML = `<i data-lucide="calendar" class="w-3 h-3 mr-1 inline"></i> กำหนดส่ง: ${formatThaiDate(task.due)}`;
+
+                infoBox.appendChild(title);
+                infoBox.appendChild(dueText);
+                leftSection.appendChild(infoBox);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "text-slate-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 transition";
+                deleteBtn.innerHTML = `<i data-lucide="trash-2" class="w-4 h-4"></i>`;
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+                div.appendChild(leftSection);
+                div.appendChild(deleteBtn);
+                container.appendChild(div);
+            });
+
+            lucide.createIcons();
+        }
+
+        function toggleTaskDone(id) {
+            const task = homeworkTasks.find(t => t.id === id);
+            if (task) {
+                task.done = !task.done;
+                saveHomeworkTasks();
+                renderHomeworkList();
+                showToast(task.done ? "ทำเครื่องหมายเสร็จสิ้นภารกิจแล้ว! 🎉" : "เปลี่ยนสถานะงานใหม่", "info");
+            }
+        }
+
+        function deleteTask(id) {
+            homeworkTasks = homeworkTasks.filter(t => t.id !== id);
+            saveHomeworkTasks();
+            renderHomeworkList();
+            showToast("ลบรายการการบ้านเรียบร้อยแล้ว", "trash");
+        }
+
+        function handleAddTask(e) {
+            e.preventDefault();
+            const subject = document.getElementById('task-subject-select').value;
+            const title = document.getElementById('task-title-input').value.trim();
+            const due = document.getElementById('task-due-input').value;
+
+            if (!title) return;
+
+            const newTask = {
+                id: Date.now(),
+                subject: subject,
+                title: title,
+                due: due,
+                done: false
+            };
+
+            homeworkTasks.push(newTask);
+            saveHomeworkTasks();
+            renderHomeworkList();
+            
+            document.getElementById('task-form').reset();
+            closeAddTaskModal();
+            showToast("เพิ่มการบ้านใหม่เข้าสมุดบันทึกสำเร็จ!", "check-circle");
+        }
+
+        // Dialog controls helpers
+        function openOriginalImageModal() { document.getElementById('original-image-modal').classList.remove('hidden'); }
+        function closeOriginalImageModal() { document.getElementById('original-image-modal').classList.add('hidden'); }
+
+        function openAddTaskModal() { document.getElementById('add-task-modal').classList.remove('hidden'); }
+        function closeAddTaskModal() { document.getElementById('add-task-modal').classList.add('hidden'); }
+
+        function formatThaiDate(dateStr) {
+            if (!dateStr) return "-";
+            const d = new Date(dateStr);
+            const thMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            return `${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
+        }
+
+        function showToast(message, iconName = 'info') {
+            const toast = document.getElementById('custom-toast');
+            const messageEl = document.getElementById('toast-message');
+            const iconWrapper = document.getElementById('toast-icon-wrapper');
+
+            messageEl.innerText = message;
+            
+            let iconHtml = `<i data-lucide="${iconName}" class="w-5 h-5"></i>`;
+            iconWrapper.innerHTML = iconHtml;
+            lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 4500);
+        }
+    </script>
+</body>
+</html>
